@@ -76,6 +76,8 @@ int main(int argc, char** argv) {
 
     char color = connectPlayers(sock);
     playGame(color, sock);
+
+    return 0;
 }    
 
 char connectPlayers(int sock) {
