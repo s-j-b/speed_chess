@@ -1,6 +1,5 @@
 /* Chess Client
  * by Simon J. Bloch
- *
  * Created: 1/22/2016
  */
 
