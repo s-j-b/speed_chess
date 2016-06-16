@@ -1,5 +1,6 @@
 /* Chess Client
  * by Simon J. Bloch
+ *
  * Created: 1/22/2016
  */
 
@@ -75,8 +76,6 @@ int main(int argc, char** argv) {
 
     char color = connectPlayers(sock);
     playGame(color, sock);
-
-    return 0;
 }    
 
 char connectPlayers(int sock) {
