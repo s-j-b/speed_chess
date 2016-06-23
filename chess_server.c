@@ -29,7 +29,7 @@
 #define DIM (8)
 #define BACKLOG (10)
 #define REQUEST_SIZE (6)
-#define printhere printf("HERE--> %d\n", __LINE__)
+#define printhere printf("@LINE: %d\n", __LINE__)
 
 int move_number;
 int is_white;

@@ -6,6 +6,7 @@
 
 #include <arpa/inet.h>
 #include <dirent.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <inttypes.h>
@@ -14,6 +15,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -21,30 +23,31 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-/*##############################################################################
-################################### Globals ####################################
-##############################################################################*/
+////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////// Globals ////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
 #define MOVE_SIZE (4)
 #define DIM (8)
 #define BACKLOG (10)
 #define REQUEST_SIZE (6)
-#define printhere printf("HERE--> %d\n", __LINE__)
+#define printhere printf("@LINE: %d\n", __LINE__)
 
 char move[MOVE_SIZE];
 
-/*##############################################################################
-################################# Declarations #################################
-##############################################################################*/
+////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////// Declarations /////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
 char connectPlayers(int sock);
 void playGame(char color, int sock);
 void sendBuffer(char* buffer, int size, int sock);
 void recvBuffer(char* buffer, int size, int sock);
 
-/*##############################################################################
-################################## Functions ###################################
-##############################################################################*/
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////// Functions ///////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char** argv) {
     
@@ -99,6 +102,79 @@ void playGame(char color, int sock) {
             if (!strcmp(move, "mate")) {
                 break;
             }
+
+            int fd = -1;
+            char *anon, *zero;
+
+            if ((fd = open("./moves", O_RDWR, 0)) == -1) {
+                err(1, "open");
+            }
+
+            /*
+              RET = starting address of new mapping
+              addr = NULL(preferred)
+              length = 
+            */
+            void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset);
+
+              
+            
+            anon = (char*)mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_ANON|MAP_SHARED, -1, 0);
+            zero = (char*)mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_FILE|MAP_SHARED, fd, 0);
+            
+            const char str1[] = "string 1";
+            const char str2[] = "string 2";
+
+            printhere;
+            
+            if (anon == MAP_FAILED || zero == MAP_FAILED)
+                errx(1, "either mmap");
+
+            printhere;
+            
+            memcpy(anon, str1, 8 * sizeof(char));
+            memcpy(zero, str1, 8 * sizeof(char));
+
+            printhere;
+            
+            int parpid = getpid(), childpid;
+            
+            printf("PID %d:\tanonymous %s, zero-backed %s\n", parpid, anon, zero);
+
+            printhere;
+            
+            switch ((childpid = fork())) {
+            case -1:
+                err(1, "fork");
+                /* NOTREACHED */
+            case 0:
+                childpid = getpid();
+                printf("PID %d:\tanonymous %s, zero-backed %s\n", childpid, anon, zero);
+                sleep(3);
+
+                printf("PID %d:\tanonymous %s, zero-backed %s\n", childpid, anon, zero);
+                munmap(anon, 4096);
+                munmap(zero, 4096);
+                close(fd);
+                printf("In Case 0 end!\n");
+                exit(1);
+            }
+
+            printhere;
+
+            sleep(2);
+            strcpy(anon, str2);
+            strcpy(zero, str2);
+
+            printhere;
+            
+            printf("PID %d:\tanonymous %s, zero-backed %s\n", parpid, anon, zero);
+
+            
+            munmap(anon, 4096);
+            munmap(zero, 4096);
+
+            close(fd);
             
             recvBuffer(move, MOVE_SIZE, sock);
             if (!strcmp(move, "mate")) {
